@@ -73,12 +73,13 @@ mod test {
             from: accounts[1].owner.clone(),
             to: accounts[2].owner.clone(),
             end_time: 1121212,
+            is_active: true,
             start_time: 212121,
             lamports_withdrawn: 0,
             amount_second: 12121,
         };
 
-        let v = data_to_send.try_to_vec().unwrap();
+        let _v = data_to_send.try_to_vec().unwrap();
 
         // assert_eq!(create_stream(&program_id, &accounts, &v), Ok(()));
 

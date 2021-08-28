@@ -95,6 +95,17 @@ pub fn close_stream(
         (rent_taken + totalamount_streamed - lamport_streamed_to_reciver + reward_earned_sender)
             as u64,
     );
+    if **writing_account.lamports.borrow_mut() != 0 {
+        //unlikely
+        transfer(
+            writing_account.key,
+            administrator.key,
+            **writing_account.lamports.borrow_mut(),
+        );
+    }
+
+    data_present.lamports_withdrawn += lamport_streamed_to_reciver;
+    data_present.is_active = false;
 
     Ok(())
 }

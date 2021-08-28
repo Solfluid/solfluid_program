@@ -9,4 +9,5 @@ pub struct PaymentStreams {
     pub to: Pubkey,
     pub from: Pubkey,
     pub lamports_withdrawn: i64,
+    pub is_active: bool,
 }
