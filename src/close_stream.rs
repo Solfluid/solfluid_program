@@ -27,13 +27,14 @@ pub fn close_stream(
     let accounts_iter = &mut accounts.iter();
     let administrator = next_account_info(accounts_iter)?;
     let writing_account = next_account_info(accounts_iter)?;
-    let reciver_account = next_account_info(accounts_iter)?;
     let sender_account = next_account_info(accounts_iter)?;
+    let reciver_account = next_account_info(accounts_iter)?;
 
     if writing_account.owner != program_id && administrator.owner != program_id {
         msg!("Writter account isn't owned by program");
         return Err(ProgramError::IncorrectProgramId);
     }
+
     let mut data_present: PaymentStreams =
         match BorshDeserialize::try_from_slice(writing_account.data.take()) {
             Ok(x) => x,
@@ -46,6 +47,15 @@ pub fn close_stream(
     if data_present.to != reciver_account.owner.clone() {
         msg!("You can't get money from this stream");
         return Err(ProgramError::InvalidAccountData);
+    }
+
+    if data_present.from != sender_account.owner.clone() {
+        msg!("You can't get money from this stream");
+        return Err(ProgramError::InvalidAccountData);
+    }
+    if !data_present.is_active {
+        msg!("not active already");
+        return Err(ProgramError::InvalidInstructionData);
     }
 
     let input_data: ReciverRewardPercentage =

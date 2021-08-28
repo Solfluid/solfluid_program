@@ -6,6 +6,8 @@ use solana_program::{
     msg,
     program_error::ProgramError,
     pubkey::Pubkey,
+    rent::Rent,
+    sysvar::Sysvar,
 };
 
 pub fn create_stream(
@@ -48,6 +50,13 @@ pub fn create_stream(
     {
         msg!("Incorrect input instruction");
         return Err(ProgramError::InvalidInstructionData);
+    }
+    let rent_exemption = Rent::get()?.minimum_balance(writing_account.data_len());
+    let total_amount_to_be_streamed =
+        ((input_data.end_time - input_data.start_time) * input_data.amount_second) as u64;
+    if **writing_account.lamports.borrow_mut() < total_amount_to_be_streamed + rent_exemption {
+        msg!("Can't procced");
+        return Err(ProgramError::InvalidAccountData);
     }
 
     input_data.serialize(&mut &mut writing_account.data.borrow_mut()[..])?;
