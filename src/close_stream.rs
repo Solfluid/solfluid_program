@@ -30,6 +30,11 @@ pub fn close_stream(
     let sender_account = next_account_info(accounts_iter)?;
     let reciver_account = next_account_info(accounts_iter)?;
 
+    if !sender_account.is_signer {
+        msg!("Sender account should be signer");
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
     if writing_account.owner != program_id && administrator.owner != program_id {
         msg!("Writter account isn't owned by program");
         return Err(ProgramError::IncorrectProgramId);
@@ -116,6 +121,8 @@ pub fn close_stream(
 
     data_present.lamports_withdrawn += lamport_streamed_to_reciver;
     data_present.is_active = false;
+
+    data_present.serialize(&mut &mut writing_account.data.borrow_mut()[..])?;
 
     Ok(())
 }

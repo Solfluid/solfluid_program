@@ -2,6 +2,7 @@ use crate::payment_stream::PaymentStreams;
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
+    clock::Clock,
     entrypoint::ProgramResult,
     msg,
     program_error::ProgramError,
@@ -20,6 +21,11 @@ pub fn create_stream(
     let senders_account = next_account_info(accounts_iter)?;
     let reciver_account = next_account_info(accounts_iter)?;
 
+    if !senders_account.is_signer {
+        msg!("Sender account should be signer");
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
     if writing_account.owner != program_id {
         msg!("Writter account isn't owned by program");
         return Err(ProgramError::IncorrectProgramId);
@@ -36,7 +42,13 @@ pub fn create_stream(
             return Err(ProgramError::InvalidInstructionData);
         }
     };
-    if input_data.start_time > input_data.end_time {
+    let time: i64 = Clock::get()?.unix_timestamp;
+    if input_data.start_time < time {
+        msg!("Start time should not be less then current time");
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
+    if input_data.start_time >= input_data.end_time {
         msg!("Incorrect input instruction");
         return Err(ProgramError::InvalidInstructionData);
     }
@@ -60,5 +72,6 @@ pub fn create_stream(
     }
 
     input_data.serialize(&mut &mut writing_account.data.borrow_mut()[..])?;
+
     Ok(())
 }

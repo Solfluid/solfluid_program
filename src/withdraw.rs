@@ -27,6 +27,11 @@ pub fn withdraw(
     let writing_account = next_account_info(accounts_iter)?;
     let reciver_account = next_account_info(accounts_iter)?;
 
+    if !reciver_account.is_signer {
+        msg!("Sender account should be signer");
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
     if writing_account.owner != program_id {
         msg!("Writter account isn't owned by program");
         return Err(ProgramError::IncorrectProgramId);

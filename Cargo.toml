@@ -17,4 +17,4 @@ solana-sdk = "=1.7.9"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "helloworld"
+name = "solfluid"

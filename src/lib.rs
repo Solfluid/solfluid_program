@@ -79,9 +79,9 @@ mod test {
             amount_second: 12121,
         };
 
-        let _v = data_to_send.try_to_vec().unwrap();
+        let v = data_to_send.try_to_vec().unwrap();
 
-        // assert_eq!(create_stream(&program_id, &accounts, &v), Ok(()));
+        assert_eq!(create_stream(&program_id, &accounts, &v), Ok(()));
 
         let data_changed: PaymentStreams =
             match BorshDeserialize::try_from_slice(accounts[0].data.take()) {
