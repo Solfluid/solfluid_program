@@ -35,7 +35,7 @@ pub fn create_stream(
         msg!("Seriouly if you are this dumb, I am going to lose my shit");
         return Err(ProgramError::InvalidInstructionData);
     }
-    let input_data: PaymentStreams = match BorshDeserialize::try_from_slice(instruction_data) {
+    let mut input_data: PaymentStreams = match BorshDeserialize::try_from_slice(instruction_data) {
         Ok(x) => x,
         Err(e) => {
             msg!("Invalid Input {}", e.to_string());
@@ -45,6 +45,11 @@ pub fn create_stream(
     let time: i64 = Clock::get()?.unix_timestamp;
     if input_data.start_time < time {
         msg!("Start time should not be less then current time");
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
+    if input_data.amount_second < 0 {
+        msg!("Can't procced");
         return Err(ProgramError::InvalidInstructionData);
     }
 
@@ -63,13 +68,17 @@ pub fn create_stream(
         msg!("Incorrect input instruction");
         return Err(ProgramError::InvalidInstructionData);
     }
-    let rent_exemption = Rent::get()?.minimum_balance(writing_account.data_len());
+    //size of struct is 104
+    let rent_exemption = Rent::get()?.minimum_balance(104);
     let total_amount_to_be_streamed =
         ((input_data.end_time - input_data.start_time) * input_data.amount_second) as u64;
     if **writing_account.lamports.borrow_mut() < total_amount_to_be_streamed + rent_exemption {
         msg!("Can't procced");
         return Err(ProgramError::InvalidAccountData);
     }
+
+    input_data.lamports_withdrawn = 0;
+    input_data.is_active = true;
 
     input_data.serialize(&mut &mut writing_account.data.borrow_mut()[..])?;
 

@@ -81,7 +81,7 @@ pub fn close_stream(
         * (std::cmp::min(time, data_present.end_time) - data_present.start_time)
         - data_present.lamports_withdrawn;
 
-    let rent_taken: i64 = Rent::get()?.minimum_balance(writing_account.data_len()) as i64;
+    let rent_taken: i64 = Rent::get()?.minimum_balance(104) as i64;
 
     let writing_account_balance: i64 = (**writing_account.lamports.borrow_mut())
         .try_into()
@@ -110,14 +110,14 @@ pub fn close_stream(
         (rent_taken + totalamount_streamed - lamport_streamed_to_reciver + reward_earned_sender)
             as u64,
     );
-    if **writing_account.lamports.borrow_mut() != 0 {
-        //unlikely
-        transfer(
-            writing_account.key,
-            administrator.key,
-            **writing_account.lamports.borrow_mut(),
-        );
-    }
+    // if **writing_account.lamports.borrow_mut() != 0 {
+    //     //unlikely
+    //     transfer(
+    //         writing_account.key,
+    //         administrator.key,
+    //         **writing_account.lamports.borrow_mut(),
+    //     );
+    // }
 
     data_present.lamports_withdrawn += lamport_streamed_to_reciver;
     data_present.is_active = false;
