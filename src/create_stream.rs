@@ -54,14 +54,10 @@ pub fn create_stream(
     }
 
     if input_data.start_time >= input_data.end_time {
-        msg!("Incorrect input instruction");
+        msg!("Start time should'nt be greater than end time");
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    if !input_data.is_active {
-        msg!("Incorrect input instruction");
-        return Err(ProgramError::InvalidInstructionData);
-    }
     if input_data.from != senders_account.key.clone()
         && input_data.to != reciver_account.key.clone()
     {

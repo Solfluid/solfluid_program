@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use crate::payment_stream::PaymentStreams;
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
@@ -61,11 +59,16 @@ pub fn withdraw(
             return Err(ProgramError::InvalidInstructionData);
         }
     };
-    if input_data.amount
-        > data_present.amount_second
-            * (Clock::get().unwrap().unix_timestamp - data_present.start_time)
-            - data_present.lamports_withdrawn
-        && input_data.amount < 0
+
+    let time: i64 = Clock::get()?.unix_timestamp;
+
+    let total_amount_received = data_present.amount_second
+        * (std::cmp::min(time, data_present.end_time) - data_present.start_time)
+        - data_present.lamports_withdrawn;
+
+    if input_data.amount > total_amount_received
+        || input_data.amount < 0
+        || total_amount_received < 0
     {
         msg!("Insufficent balance");
         return Err(ProgramError::InsufficientFunds);
@@ -74,8 +77,9 @@ pub fn withdraw(
     transfer(
         writing_account.key,
         reciver_account.key,
-        input_data.amount.try_into().unwrap(),
+        input_data.amount as u64,
     );
+
     data_present.lamports_withdrawn += input_data.amount;
 
     data_present.serialize(&mut &mut writing_account.data.borrow_mut()[..])?;

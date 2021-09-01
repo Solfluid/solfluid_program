@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use crate::payment_stream::PaymentStreams;
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
@@ -13,6 +11,7 @@ use solana_program::{
     system_instruction::transfer,
     sysvar::Sysvar,
 };
+use std::convert::TryInto;
 
 #[derive(BorshSerialize, BorshDeserialize, Debug, Clone)]
 pub struct ReciverRewardPercentage {
@@ -77,11 +76,14 @@ pub fn close_stream(
         return Err(ProgramError::InvalidInstructionData);
     }
     let time: i64 = Clock::get()?.unix_timestamp;
-    let lamport_streamed_to_reciver: i64 = data_present.amount_second
-        * (std::cmp::min(time, data_present.end_time) - data_present.start_time)
-        - data_present.lamports_withdrawn;
+    let mut lamport_streamed_to_reciver: i64 = 0;
+    if time > data_present.start_time {
+        lamport_streamed_to_reciver = data_present.amount_second
+            * (std::cmp::min(time, data_present.end_time) - data_present.start_time)
+            - data_present.lamports_withdrawn;
+    }
 
-    let rent_taken: i64 = Rent::get()?.minimum_balance(104) as i64;
+    let rent_taken: i64 = Rent::get()?.minimum_balance(writing_account.data_len()) as i64;
 
     let writing_account_balance: i64 = (**writing_account.lamports.borrow_mut())
         .try_into()
@@ -95,9 +97,8 @@ pub fn close_stream(
     let reward_perctage_reciver: i64 = (input_data.percentage as f64 / 100f64).floor() as i64;
     let reward_earned_reciver: i64 = yield_earned * reward_perctage_reciver;
 
-    let reward_perctage_sender: i64 =
-        ((100f64 - input_data.percentage as f64) / 100f64).floor() as i64;
-    let reward_earned_sender: i64 = yield_earned * reward_perctage_sender;
+    let reward_earned_sender: i64 = yield_earned - reward_perctage_reciver;
+
     transfer(
         writing_account.key,
         reciver_account.key,
@@ -110,14 +111,6 @@ pub fn close_stream(
         (rent_taken + totalamount_streamed - lamport_streamed_to_reciver + reward_earned_sender)
             as u64,
     );
-    // if **writing_account.lamports.borrow_mut() != 0 {
-    //     //unlikely
-    //     transfer(
-    //         writing_account.key,
-    //         administrator.key,
-    //         **writing_account.lamports.borrow_mut(),
-    //     );
-    // }
 
     data_present.lamports_withdrawn += lamport_streamed_to_reciver;
     data_present.is_active = false;
