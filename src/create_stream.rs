@@ -35,13 +35,10 @@ pub fn create_stream(
         msg!("Seriouly if you are this dumb, I am going to lose my shit");
         return Err(ProgramError::InvalidInstructionData);
     }
-    let mut input_data: PaymentStreams = match BorshDeserialize::try_from_slice(instruction_data) {
-        Ok(x) => x,
-        Err(e) => {
-            msg!("Invalid Input {}", e.to_string());
-            return Err(ProgramError::InvalidInstructionData);
-        }
-    };
+
+    let mut input_data = PaymentStreams::try_from_slice(instruction_data)
+        .expect("instruction data serialization didn't worked");
+
     let time: i64 = Clock::get()?.unix_timestamp;
     if input_data.start_time < time {
         msg!("Start time should not be less then current time");
@@ -75,8 +72,6 @@ pub fn create_stream(
 
     input_data.lamports_withdrawn = 0;
     input_data.is_active = true;
-
     input_data.serialize(&mut &mut writing_account.data.borrow_mut()[..])?;
-
     Ok(())
 }

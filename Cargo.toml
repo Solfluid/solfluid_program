@@ -9,11 +9,13 @@ no-entrypoint = []
 [dependencies]
 borsh = "0.9.1"
 borsh-derive = "0.9.1"
-solana-program = "=1.7.9"
+solana-program = "=1.7.11"
+solana-stake-accounts = "1.7.11"
 
 [dev-dependencies]
-solana-program-test = "=1.7.9"
-solana-sdk = "=1.7.9"
+solana-program-test = "=1.7.11"
+solana-sdk = "=1.7.11"
+
 
 [lib]
 crate-type = ["cdylib", "lib"]

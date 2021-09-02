@@ -12,7 +12,6 @@ use solana_program::{
     sysvar::Sysvar,
 };
 use std::convert::TryInto;
-
 #[derive(BorshSerialize, BorshDeserialize, Debug, Clone)]
 pub struct ReciverRewardPercentage {
     pub percentage: u8,
@@ -39,21 +38,19 @@ pub fn close_stream(
         return Err(ProgramError::IncorrectProgramId);
     }
 
-    let mut data_present: PaymentStreams =
-        match BorshDeserialize::try_from_slice(writing_account.data.take()) {
-            Ok(x) => x,
-            Err(er) => {
-                msg!("{}", er);
-                return Err(ProgramError::InvalidAccountData);
-            }
-        };
+    let mut data_present = PaymentStreams::try_from_slice(&writing_account.data.borrow())
+        .expect("account data serialization didn't worked");
 
-    if data_present.to != reciver_account.owner.clone() {
-        msg!("You can't get money from this stream");
+    if data_present.to != *reciver_account.key {
+        msg!(
+            "You can't get money from this stream {:?} , {:?}",
+            data_present.to,
+            *reciver_account.key
+        );
         return Err(ProgramError::InvalidAccountData);
     }
 
-    if data_present.from != sender_account.owner.clone() {
+    if data_present.from != *sender_account.key {
         msg!("You can't get money from this stream");
         return Err(ProgramError::InvalidAccountData);
     }
@@ -62,14 +59,8 @@ pub fn close_stream(
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    let input_data: ReciverRewardPercentage =
-        match BorshDeserialize::try_from_slice(instruction_data) {
-            Ok(a) => a,
-            Err(a) => {
-                msg!("Invalid input data {}", a);
-                return Err(ProgramError::InvalidInstructionData);
-            }
-        };
+    let input_data = ReciverRewardPercentage::try_from_slice(instruction_data)
+        .expect("Instruction Data didn't worked");
 
     if input_data.percentage > 100 {
         msg!("invalid input");
@@ -94,7 +85,7 @@ pub fn close_stream(
 
     let yield_earned = writing_account_balance - totalamount_streamed - rent_taken;
 
-    let reward_perctage_reciver: i64 = (input_data.percentage as f64 / 100f64).floor() as i64;
+    let reward_perctage_reciver: i64 = (input_data.percentage as f64 / 100f64) as i64;
     let reward_earned_reciver: i64 = yield_earned * reward_perctage_reciver;
 
     let reward_earned_sender: i64 = yield_earned - reward_perctage_reciver;

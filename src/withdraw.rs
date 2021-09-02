@@ -1,5 +1,5 @@
 use crate::payment_stream::PaymentStreams;
-use borsh::{BorshDeserialize, BorshSerialize};
+use borsh::{BorshDeserialize, BorshSchema, BorshSerialize};
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     clock::Clock,
@@ -11,7 +11,7 @@ use solana_program::{
     sysvar::Sysvar,
 };
 
-#[derive(BorshSerialize, BorshDeserialize, Debug, Clone)]
+#[derive(BorshSerialize, BorshSchema, BorshDeserialize, Debug, Clone)]
 pub struct WithdrawAmount {
     amount: i64,
 }
@@ -34,32 +34,21 @@ pub fn withdraw(
         msg!("Writter account isn't owned by program");
         return Err(ProgramError::IncorrectProgramId);
     }
-    let mut data_present: PaymentStreams =
-        match BorshDeserialize::try_from_slice(writing_account.data.take()) {
-            Ok(x) => x,
-            Err(er) => {
-                msg!("{}", er);
-                return Err(ProgramError::InvalidAccountData);
-            }
-        };
+    let mut data_present = PaymentStreams::try_from_slice(&writing_account.data.borrow())
+        .expect("account data serialization didn't worked");
+
     if !data_present.is_active {
         msg!("Invalid input data");
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    if data_present.to != reciver_account.owner.clone() {
+    if data_present.to != *reciver_account.key {
         msg!("You can't get money from this stream");
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let input_data: WithdrawAmount = match BorshDeserialize::try_from_slice(instruction_data) {
-        Ok(a) => a,
-        Err(a) => {
-            msg!("Invalid input data, {}", a);
-            return Err(ProgramError::InvalidInstructionData);
-        }
-    };
-
+    let input_data =
+        WithdrawAmount::try_from_slice(instruction_data).expect("Instruction Data didn't worked");
     let time: i64 = Clock::get()?.unix_timestamp;
 
     let total_amount_received = data_present.amount_second
