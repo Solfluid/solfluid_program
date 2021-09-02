@@ -62,7 +62,7 @@ pub fn create_stream(
         return Err(ProgramError::InvalidInstructionData);
     }
     //size of struct is 104
-    let rent_exemption = Rent::get()?.minimum_balance(104);
+    let rent_exemption = Rent::get()?.minimum_balance(writing_account.data_len());
     let total_amount_to_be_streamed =
         ((input_data.end_time - input_data.start_time) * input_data.amount_second) as u64;
     if **writing_account.lamports.borrow_mut() < total_amount_to_be_streamed + rent_exemption {

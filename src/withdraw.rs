@@ -63,11 +63,8 @@ pub fn withdraw(
         return Err(ProgramError::InsufficientFunds);
     }
 
-    transfer(
-        writing_account.key,
-        reciver_account.key,
-        input_data.amount as u64,
-    );
+    **writing_account.try_borrow_mut_lamports()? -= input_data.amount as u64;
+    **reciver_account.try_borrow_mut_lamports()? += input_data.amount as u64;
 
     data_present.lamports_withdrawn += input_data.amount;
 

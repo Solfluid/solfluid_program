@@ -90,18 +90,28 @@ pub fn close_stream(
 
     let reward_earned_sender: i64 = yield_earned - reward_perctage_reciver;
 
-    transfer(
-        writing_account.key,
-        reciver_account.key,
-        (lamport_streamed_to_reciver + reward_earned_reciver) as u64,
-    );
+    // transfer(
+    //     writing_account.key,
+    //     reciver_account.key,
+    //     (lamport_streamed_to_reciver + reward_earned_reciver) as u64,
+    // );
+    **writing_account.try_borrow_mut_lamports()? -=
+        (lamport_streamed_to_reciver + reward_earned_reciver) as u64;
+    **reciver_account.try_borrow_mut_lamports()? +=
+        (lamport_streamed_to_reciver + reward_earned_reciver) as u64;
 
-    transfer(
-        writing_account.key,
-        sender_account.key,
-        (rent_taken + totalamount_streamed - lamport_streamed_to_reciver + reward_earned_sender)
-            as u64,
-    );
+    // transfer(
+    //     writing_account.key,
+    //     sender_account.key,
+    //     (rent_taken + totalamount_streamed - lamport_streamed_to_reciver + reward_earned_sender)
+    //         as u64,
+    // );
+    **writing_account.try_borrow_mut_lamports()? -= (rent_taken + totalamount_streamed
+        - lamport_streamed_to_reciver
+        + reward_earned_sender) as u64;
+    **sender_account.try_borrow_mut_lamports()? += (rent_taken + totalamount_streamed
+        - lamport_streamed_to_reciver
+        + reward_earned_sender) as u64;
 
     data_present.lamports_withdrawn += lamport_streamed_to_reciver;
     data_present.is_active = false;
