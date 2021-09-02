@@ -10,4 +10,15 @@ pub struct PaymentStreams {
     pub from: Pubkey,
     pub lamports_withdrawn: i64,
     pub is_active: bool,
+    pub stake_pubkey: Pubkey,
+}
+
+#[derive(BorshSerialize, BorshDeserialize, Debug, Clone)]
+pub struct PaymentStreamsInput {
+    pub end_time: UnixTimestamp,
+    pub start_time: UnixTimestamp,
+    pub amount_second: i64,
+    pub to: Pubkey,
+    pub from: Pubkey,
+    pub stake_token_to: Pubkey,
 }

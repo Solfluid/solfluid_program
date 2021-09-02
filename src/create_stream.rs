@@ -1,4 +1,4 @@
-use crate::payment_stream::PaymentStreams;
+use crate::payment_stream::{PaymentStreams, PaymentStreamsInput};
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
@@ -8,6 +8,7 @@ use solana_program::{
     program_error::ProgramError,
     pubkey::Pubkey,
     rent::Rent,
+    stake,
     sysvar::Sysvar,
 };
 
@@ -36,10 +37,11 @@ pub fn create_stream(
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    let mut input_data = PaymentStreams::try_from_slice(instruction_data)
+    let input_data = PaymentStreamsInput::try_from_slice(instruction_data)
         .expect("instruction data serialization didn't worked");
 
-    let time: i64 = Clock::get()?.unix_timestamp;
+    let clock = Clock::get()?;
+    let time: i64 = clock.unix_timestamp;
     if input_data.start_time < time {
         msg!("Start time should not be less then current time");
         return Err(ProgramError::InvalidInstructionData);
@@ -62,16 +64,43 @@ pub fn create_stream(
         return Err(ProgramError::InvalidInstructionData);
     }
     //size of struct is 104
-    let rent_exemption = Rent::get()?.minimum_balance(104);
+    let rent_exemption = Rent::get()?.minimum_balance(instruction_data.len());
     let total_amount_to_be_streamed =
         ((input_data.end_time - input_data.start_time) * input_data.amount_second) as u64;
     if **writing_account.lamports.borrow_mut() < total_amount_to_be_streamed + rent_exemption {
         msg!("Can't procced");
         return Err(ProgramError::InvalidAccountData);
     }
+    let stake_pubkey = Pubkey::create_with_seed(writing_account.key, "seed", &stake::config::id())?;
 
-    input_data.lamports_withdrawn = 0;
-    input_data.is_active = true;
-    input_data.serialize(&mut &mut writing_account.data.borrow_mut()[..])?;
+    let authorized = stake::state::Authorized {
+        staker: *writing_account.key,
+        withdrawer: *writing_account.key,
+    };
+    let lockup = stake::state::Lockup {
+        custodian: *writing_account.key,
+        epoch: clock.epoch_start_timestamp as u64,
+        unix_timestamp: input_data.start_time,
+    };
+
+    stake::instruction::create_account_and_delegate_stake(
+        &writing_account.key,
+        &stake_pubkey,
+        &input_data.stake_token_to, //
+        &authorized,
+        &lockup,
+        total_amount_to_be_streamed,
+    );
+    let data_to_write = PaymentStreams {
+        amount_second: input_data.amount_second,
+        end_time: input_data.end_time,
+        from: input_data.from,
+        is_active: true,
+        lamports_withdrawn: 0,
+        stake_pubkey: stake_pubkey,
+        to: input_data.to,
+        start_time: input_data.start_time,
+    };
+    data_to_write.serialize(&mut &mut writing_account.data.borrow_mut()[..])?;
     Ok(())
 }
