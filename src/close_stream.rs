@@ -24,13 +24,17 @@ pub fn close_stream(
     instruction_data: &[u8],
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
+    // write true
     let writing_account = next_account_info(accounts_iter)?;
+    // write true
     let stake_account = next_account_info(accounts_iter)?;
     let clock_account = next_account_info(accounts_iter)?;
     let stake_history = next_account_info(accounts_iter)?;
+    // is signer true, write true
     let sender_account = next_account_info(accounts_iter)?;
+    //write true
     let reciver_account = next_account_info(accounts_iter)?;
-    let reciver_account_copy = next_account_info(accounts_iter)?;
+    let _reciver_account_copy = next_account_info(accounts_iter)?;
 
     if !sender_account.is_signer {
         msg!("Sender account should be signer");

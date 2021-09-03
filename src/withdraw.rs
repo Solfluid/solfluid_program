@@ -23,11 +23,14 @@ pub fn withdraw(
     instruction_data: &[u8],
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
+    //write true
     let writing_account = next_account_info(accounts_iter)?;
+    //write true
     let stake_account = next_account_info(accounts_iter)?;
     let vote_account = next_account_info(accounts_iter)?;
     let clock_account = next_account_info(accounts_iter)?;
     let stake_history = next_account_info(accounts_iter)?;
+    // is signer true
     let reciver_account = next_account_info(accounts_iter)?;
 
     if !reciver_account.is_signer {
