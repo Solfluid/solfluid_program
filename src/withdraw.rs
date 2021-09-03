@@ -5,9 +5,10 @@ use solana_program::{
     clock::Clock,
     entrypoint::ProgramResult,
     msg,
+    program::invoke_signed,
     program_error::ProgramError,
     pubkey::Pubkey,
-    system_instruction::transfer,
+    stake,
     sysvar::Sysvar,
 };
 
@@ -22,7 +23,14 @@ pub fn withdraw(
     instruction_data: &[u8],
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
+    //write true
     let writing_account = next_account_info(accounts_iter)?;
+    //write true
+    let stake_account = next_account_info(accounts_iter)?;
+    let vote_account = next_account_info(accounts_iter)?;
+    let clock_account = next_account_info(accounts_iter)?;
+    let stake_history = next_account_info(accounts_iter)?;
+    // is signer true
     let reciver_account = next_account_info(accounts_iter)?;
 
     if !reciver_account.is_signer {
@@ -62,11 +70,62 @@ pub fn withdraw(
         msg!("Insufficent balance");
         return Err(ProgramError::InsufficientFunds);
     }
+    if data_present.is_delegated {
+        msg!("stakes are delegated can't withdraw");
+        return Err(ProgramError::InsufficientFunds);
+    }
+
+    if time < data_present.delegate_time {
+        msg!("undelegated stakes will need some time to be added to account");
+        return Err(ProgramError::InvalidArgument);
+    }
+
+    let withdraw_instruction = stake::instruction::withdraw(
+        stake_account.key,
+        writing_account.key,
+        writing_account.key,
+        input_data.amount as u64,
+        None,
+    );
+
+    invoke_signed(
+        &withdraw_instruction,
+        &[
+            stake_account.to_owned(),
+            writing_account.to_owned(),
+            clock_account.to_owned(),
+            stake_history.to_owned(),
+            writing_account.to_owned(),
+        ],
+        &[&[b"seed"]],
+    )
+    .expect("Withdraw failed");
 
     **writing_account.try_borrow_mut_lamports()? -= input_data.amount as u64;
     **reciver_account.try_borrow_mut_lamports()? += input_data.amount as u64;
-
     data_present.lamports_withdrawn += input_data.amount;
+
+    let delegate_instruction = stake::instruction::delegate_stake(
+        stake_account.key,
+        writing_account.key,
+        &data_present.vote_right_to,
+    );
+
+    invoke_signed(
+        &delegate_instruction,
+        &[
+            stake_account.to_owned(),
+            vote_account.to_owned(),
+            clock_account.to_owned(),
+            stake_history.to_owned(),
+            stake_account.to_owned(),
+            writing_account.to_owned(),
+        ],
+        &[&[b"seed"]],
+    )
+    .expect("delegation failed");
+
+    data_present.is_delegated = true;
 
     data_present.serialize(&mut &mut writing_account.data.borrow_mut()[..])?;
     Ok(())

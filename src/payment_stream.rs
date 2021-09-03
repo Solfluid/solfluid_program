@@ -10,4 +10,8 @@ pub struct PaymentStreams {
     pub from: Pubkey,
     pub lamports_withdrawn: i64,
     pub is_active: bool,
+    pub stake_account: Pubkey,
+    pub is_delegated: bool,
+    pub delegate_time: UnixTimestamp,
+    pub vote_right_to: Pubkey,
 }
