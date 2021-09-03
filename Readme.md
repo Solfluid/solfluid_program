@@ -1,4 +1,4 @@
-# SolFluild Program 
+# SolFluid Program 
 
 This repository has the code of the latest deployed program used for streaming payments on solana block chain
 
