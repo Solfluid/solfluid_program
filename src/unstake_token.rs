@@ -29,7 +29,7 @@ pub fn unstake_tokens(
     let sender_account = next_account_info(accounts_iter)?;
     let reciver_account = next_account_info(accounts_iter)?;
 
-    if sender_account.is_signer || reciver_account.is_signer {
+    if !sender_account.is_signer && !reciver_account.is_signer {
         msg!("Sender account should be signer");
         return Err(ProgramError::IncorrectProgramId);
     }
