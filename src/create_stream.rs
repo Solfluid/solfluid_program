@@ -18,6 +18,7 @@ pub fn create_stream(
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
     let writing_account = next_account_info(accounts_iter)?;
+    let stake_account = next_account_info(accounts_iter)?;
     let senders_account = next_account_info(accounts_iter)?;
     let reciver_account = next_account_info(accounts_iter)?;
 
@@ -61,15 +62,17 @@ pub fn create_stream(
         msg!("Incorrect input instruction");
         return Err(ProgramError::InvalidInstructionData);
     }
-    //size of struct is 104
     let rent_exemption = Rent::get()?.minimum_balance(writing_account.data_len());
     let total_amount_to_be_streamed =
         ((input_data.end_time - input_data.start_time) * input_data.amount_second) as u64;
-    if **writing_account.lamports.borrow_mut() < total_amount_to_be_streamed + rent_exemption {
+    if **writing_account.lamports.borrow_mut() + **stake_account.lamports.borrow_mut()
+        < total_amount_to_be_streamed + rent_exemption
+    {
         msg!("Can't procced");
         return Err(ProgramError::InvalidAccountData);
     }
-
+    input_data.is_delegated = true;
+    input_data.stake_account = *stake_account.key;
     input_data.lamports_withdrawn = 0;
     input_data.is_active = true;
     input_data.serialize(&mut &mut writing_account.data.borrow_mut()[..])?;
