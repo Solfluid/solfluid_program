@@ -66,7 +66,7 @@ pub fn unstake_tokens(
             clock_account.to_owned(),
             writing_account.to_owned(),
         ],
-        &[&[&data_present.seed]],
+        &[&[data_present.seed.as_bytes()]],
     )
     .expect("invoke failed");
 

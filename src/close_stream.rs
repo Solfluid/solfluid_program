@@ -75,7 +75,7 @@ pub fn close_stream(
             stake_history.to_owned(),
             writing_account.to_owned(),
         ],
-        &[&[&data_present.seed]],
+        &[&[data_present.seed.as_bytes()]],
     )
     .expect("Withdraw failed");
 

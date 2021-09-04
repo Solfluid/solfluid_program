@@ -96,7 +96,7 @@ pub fn withdraw(
             clock_account.to_owned(),
             writing_account.to_owned(),
         ],
-        &[&[&data_present.seed]],
+        &[&[data_present.seed.as_bytes()]],
     )
     .expect("Withdraw failed");
 
@@ -120,7 +120,7 @@ pub fn withdraw(
             config_account.to_owned(),
             writing_account.to_owned(),
         ],
-        &[&[&data_present.seed]],
+        &[&[data_present.seed.as_bytes()]],
     )
     .expect("delegation failed");
 

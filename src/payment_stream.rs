@@ -14,5 +14,5 @@ pub struct PaymentStreams {
     pub is_delegated: bool,
     pub delegate_time: UnixTimestamp,
     pub vote_right_to: Pubkey,
-    pub seed: [u8; 8],
+    pub seed: String,
 }

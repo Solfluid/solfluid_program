@@ -96,7 +96,7 @@ pub fn create_stream(
             config_account.to_owned(),
             writing_account.to_owned(),
         ],
-        &[&[&input_data.seed]],
+        &[&[input_data.seed.as_bytes()]],
     )
     .expect("delegation failed");
 
