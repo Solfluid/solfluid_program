@@ -17,17 +17,33 @@ fn process_instruction(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    if accounts.len() == 4 {
-        return create_stream(program_id, accounts, instruction_data);
+    if instruction_data[0] == 1 {
+        return create_stream(
+            program_id,
+            accounts,
+            &instruction_data[1..instruction_data.len()],
+        );
     }
-    if accounts.len() == 5 {
-        return unstake_tokens(program_id, accounts, instruction_data);
+    if instruction_data[0] == 2 {
+        return unstake_tokens(
+            program_id,
+            accounts,
+            &instruction_data[1..instruction_data.len()],
+        );
     }
-    if accounts.len() == 6 {
-        return withdraw(program_id, accounts, instruction_data);
+    if instruction_data[0] == 3 {
+        return withdraw(
+            program_id,
+            accounts,
+            &instruction_data[1..instruction_data.len()],
+        );
     }
-    if accounts.len() == 7 {
-        return close_stream(program_id, accounts, instruction_data);
+    if instruction_data[0] == 4 {
+        return close_stream(
+            program_id,
+            accounts,
+            &instruction_data[1..instruction_data.len()],
+        );
     }
     Err(ProgramError::InvalidInstructionData)
 }
@@ -36,67 +52,7 @@ entrypoint!(process_instruction);
 // Sanity tests
 #[cfg(test)]
 mod test {
-    // use crate::payment_stream::PaymentStreams;
-
-    // use super::*;
-    // use borsh::{BorshDeserialize, BorshSerialize};
-    // use solana_program::{clock::Epoch, msg};
 
     #[test]
-    fn test_sanity() {
-        // let program_id = Pubkey::default();
-        // let key = Pubkey::default();
-        // let mut lamports2 = 0;
-        // let mut data2 = [];
-        // let owner2 = Pubkey::new_unique();
-        // let reciver_account = AccountInfo::new(
-        //     &key,
-        //     false,
-        //     false,
-        //     &mut lamports2,
-        //     &mut data2,
-        //     &owner2,
-        //     false,
-        //     Epoch::default(),
-        // );
-        // let mut lamports3 = 0;
-        // let mut data3 = [0u8; 112];
-        // let writer_account = AccountInfo::new(
-        //     &program_id,
-        //     false,
-        //     false,
-        //     &mut lamports3,
-        //     &mut data3,
-        //     &program_id,
-        //     false,
-        //     Epoch::default(),
-        // );
-
-        // let accounts = vec![writer_account, reciver_account];
-        // let data_to_send = PaymentStreams {
-        //     from: accounts[1].key.clone(),
-        //     to: accounts[2].key.clone(),
-        //     end_time: 1121212,
-        //     is_active: true,
-        //     start_time: 212121,
-        //     lamports_withdrawn: 0,
-        //     amount_second: 12121,
-        //     stake_account: accounts[1].key.clone(),
-        // };
-
-        // let v = data_to_send.try_to_vec().unwrap();
-
-        // assert_eq!(create_stream(&program_id, &accounts, &v), Ok(()));
-
-        // let data_changed: PaymentStreams =
-        //     match BorshDeserialize::try_from_slice(accounts[0].data.take()) {
-        //         Ok(x) => x,
-        //         Err(error) => {
-        //             msg!("{}", error);
-        //             panic!("error");
-        //         }
-        //     };
-
-        // msg!("{:?}", data_changed);
-    }
+    fn test_sanity() {}
 }

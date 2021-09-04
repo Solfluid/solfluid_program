@@ -34,7 +34,6 @@ pub fn close_stream(
     let sender_account = next_account_info(accounts_iter)?;
     //write true
     let reciver_account = next_account_info(accounts_iter)?;
-    let _reciver_account_copy = next_account_info(accounts_iter)?;
 
     if !sender_account.is_signer {
         msg!("Sender account should be signer");
@@ -76,7 +75,7 @@ pub fn close_stream(
             stake_history.to_owned(),
             writing_account.to_owned(),
         ],
-        &[&[b"seed"]],
+        &[&[&data_present.seed]],
     )
     .expect("Withdraw failed");
 

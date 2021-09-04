@@ -5,9 +5,11 @@ use solana_program::{
     clock::Clock,
     entrypoint::ProgramResult,
     msg,
+    program::invoke_signed,
     program_error::ProgramError,
     pubkey::Pubkey,
     rent::Rent,
+    stake,
     sysvar::Sysvar,
 };
 
@@ -23,6 +25,10 @@ pub fn create_stream(
     // is signer true
     let senders_account = next_account_info(accounts_iter)?;
     let reciver_account = next_account_info(accounts_iter)?;
+    let vote_account = next_account_info(accounts_iter)?;
+    let clock_account = next_account_info(accounts_iter)?;
+    let stake_history = next_account_info(accounts_iter)?;
+    let config_account = next_account_info(accounts_iter)?;
 
     if !senders_account.is_signer {
         msg!("Sender account should be signer");
@@ -39,7 +45,7 @@ pub fn create_stream(
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    let mut input_data = PaymentStreams::try_from_slice(instruction_data)
+    let mut input_data = PaymentStreams::try_from_slice(&instruction_data)
         .expect("instruction data serialization didn't worked");
 
     let time: i64 = Clock::get()?.unix_timestamp;
@@ -74,6 +80,26 @@ pub fn create_stream(
         msg!("Can't procced");
         return Err(ProgramError::InvalidAccountData);
     }
+    let delegate_instruction = stake::instruction::delegate_stake(
+        stake_account.key,
+        writing_account.key,
+        &input_data.vote_right_to,
+    );
+
+    invoke_signed(
+        &delegate_instruction,
+        &[
+            stake_account.to_owned(),
+            vote_account.to_owned(),
+            clock_account.to_owned(),
+            stake_history.to_owned(),
+            config_account.to_owned(),
+            writing_account.to_owned(),
+        ],
+        &[&[&input_data.seed]],
+    )
+    .expect("delegation failed");
+
     input_data.is_delegated = true;
     input_data.stake_account = *stake_account.key;
     input_data.lamports_withdrawn = 0;

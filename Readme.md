@@ -2,8 +2,6 @@
 
 This repository has the code of the latest deployed program used for streaming payments on solana block chain
 
-Program Id: BmPxomzuMJecb8TtvgvT4LWQGfkXmKZ2uvyMR5iFM76D
-
 This gives uses entrypoints to create stream, withdraw from stream, unstake tokens and cancel/close stream functionality.
 
 ## Links:

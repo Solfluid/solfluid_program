@@ -32,6 +32,7 @@ pub fn withdraw(
     let stake_history = next_account_info(accounts_iter)?;
     // is signer true
     let reciver_account = next_account_info(accounts_iter)?;
+    let config_account = next_account_info(accounts_iter)?;
 
     if !reciver_account.is_signer {
         msg!("Sender account should be signer");
@@ -92,12 +93,10 @@ pub fn withdraw(
         &withdraw_instruction,
         &[
             stake_account.to_owned(),
-            writing_account.to_owned(),
             clock_account.to_owned(),
-            stake_history.to_owned(),
             writing_account.to_owned(),
         ],
-        &[&[b"seed"]],
+        &[&[&data_present.seed]],
     )
     .expect("Withdraw failed");
 
@@ -118,10 +117,10 @@ pub fn withdraw(
             vote_account.to_owned(),
             clock_account.to_owned(),
             stake_history.to_owned(),
-            stake_account.to_owned(),
+            config_account.to_owned(),
             writing_account.to_owned(),
         ],
-        &[&[b"seed"]],
+        &[&[&data_present.seed]],
     )
     .expect("delegation failed");
 
